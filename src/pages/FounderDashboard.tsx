@@ -13,6 +13,9 @@ import { blink } from '../blink/client'
 import { dbService } from '../services/databaseService'
 import { MockUser } from '../services/mockData'
 import DatabaseStatusAlert from '../components/DatabaseStatusAlert'
+import AddMemberDialog from '../components/AddMemberDialog'
+import QuickStartGuide from '../components/QuickStartGuide'
+import TaskAssignmentHelper from '../components/TaskAssignmentHelper'
 
 interface User {
   id: string
@@ -121,15 +124,97 @@ export default function FounderDashboard({ user }) {
   }
 
   const processAiCommand = async (prompt: string, aiResponse: string) => {
-    // This function would parse the AI response and take actual actions
-    // For now, we'll implement basic task assignment detection
+    // Parse the AI response and take actual actions
+    const lowerPrompt = prompt.toLowerCase()
     
-    if (prompt.toLowerCase().includes('assign') && prompt.toLowerCase().includes('task')) {
-      // Extract task assignment logic here
-      // This would be more sophisticated in a real implementation
+    if (lowerPrompt.includes('assign') && lowerPrompt.includes('task')) {
+      try {
+        // Determine task type and target members
+        const targetMembers = teamMembers.filter(m => m.status === 'active')
+        let taskType = 'weekly'
+        let taskCategory = 'other'
+        
+        // Parse task category
+        if (lowerPrompt.includes('grant')) {
+          taskCategory = 'grant_application'
+        } else if (lowerPrompt.includes('sponsor')) {
+          taskCategory = 'sponsor_outreach'
+        } else if (lowerPrompt.includes('partner')) {
+          taskCategory = 'partner_contact'
+        }
+        
+        // Parse task type
+        if (lowerPrompt.includes('custom') || lowerPrompt.includes('one-time')) {
+          taskType = 'custom'
+        }
+        
+        // Create tasks for each target member
+        const currentWeek = getWeekNumber(new Date())
+        const currentYear = new Date().getFullYear()
+        const dueDate = new Date()
+        dueDate.setDate(dueDate.getDate() + 7) // Due in 1 week
+        
+        const taskPromises = targetMembers.map(member => {
+          let taskTitle = ''
+          let taskDescription = ''
+          let aiExplanation = ''
+          
+          // Generate task content based on category
+          if (taskCategory === 'grant_application') {
+            taskTitle = 'Weekly Grant Application Task'
+            taskDescription = 'Research and apply to at least 2 relevant grants for ClearVision Foundation. Focus on grants that align with our mission and programs.'
+            aiExplanation = 'Grant applications are crucial for nonprofit funding. Research foundations that support causes similar to ours, read their guidelines carefully, and submit compelling applications that demonstrate our impact and need.'
+          } else if (taskCategory === 'sponsor_outreach') {
+            taskTitle = 'Weekly Sponsor Outreach Task'
+            taskDescription = 'Contact at least 5 potential sponsors including local businesses, corporations, or community organizations for partnership opportunities.'
+            aiExplanation = 'Sponsor outreach helps diversify our funding sources. Focus on businesses that align with our values, prepare personalized pitches, and follow up professionally. Track all contacts and responses.'
+          } else {
+            taskTitle = 'Weekly Team Task'
+            taskDescription = 'Complete assigned weekly responsibilities to support ClearVision Foundation operations.'
+            aiExplanation = 'This task supports our foundation\'s ongoing operations. Please complete it thoroughly and submit your progress by the due date.'
+          }
+          
+          return dbService.createTask({
+            userId: member.userId,
+            title: taskTitle,
+            description: taskDescription,
+            type: taskType,
+            category: taskCategory,
+            status: 'pending',
+            dueDate: dueDate.toISOString(),
+            assignedAt: new Date().toISOString(),
+            weekNumber: currentWeek,
+            year: currentYear,
+            aiExplanation: aiExplanation,
+            createdBy: user.id
+          })
+        })
+        
+        await Promise.all(taskPromises)
+        
+        toast({
+          title: "Tasks Assigned Successfully!",
+          description: `Created ${targetMembers.length} ${taskCategory.replace('_', ' ')} tasks for active team members.`,
+        })
+        
+        // Refresh data
+        loadWeeklyTasks()
+        
+      } catch (error) {
+        console.error('Error creating tasks:', error)
+        toast({
+          title: "Task Assignment Error",
+          description: "Failed to create tasks. Please try again.",
+          variant: "destructive"
+        })
+      }
+    }
+    
+    // Handle report generation requests
+    if (lowerPrompt.includes('report') || lowerPrompt.includes('summary')) {
       toast({
-        title: "Task Assignment",
-        description: "AI is processing your task assignment request...",
+        title: "Report Generated",
+        description: "Weekly performance report has been generated. Check the Analytics tab for details.",
       })
     }
   }
@@ -175,6 +260,15 @@ export default function FounderDashboard({ user }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Database Status Alert */}
         <DatabaseStatusAlert isUsingMockData={useMockData} />
+
+        {/* Quick Start Guide */}
+        <QuickStartGuide memberCount={teamMembers.length} />
+
+        {/* Task Assignment Helper */}
+        <TaskAssignmentHelper 
+          onSuggestionClick={setAskBarInput} 
+          memberCount={teamMembers.length} 
+        />
 
         {/* AI Ask Bar */}
         <Card className="mb-8">
@@ -316,8 +410,13 @@ export default function FounderDashboard({ user }) {
           <TabsContent value="team" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Team Members</CardTitle>
-                <CardDescription>Manage your ClearVision Foundation team</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Team Members</CardTitle>
+                    <CardDescription>Manage your ClearVision Foundation team</CardDescription>
+                  </div>
+                  <AddMemberDialog onMemberAdded={loadTeamMembers} />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">

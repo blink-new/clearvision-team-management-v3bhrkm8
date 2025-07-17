@@ -31,7 +31,9 @@ export class DatabaseService {
       this.databaseAvailable = false
       this.useMockData = true
       
-      // Log specific error information for debugging (only in development)
+      // Silently handle expected database unavailability
+      // The application is designed to work seamlessly with mock data
+      // Only log in development for debugging purposes
       if (process.env.NODE_ENV === 'development') {
         if (error?.message?.includes('404')) {
           console.log('📊 Demo Mode: Using mock data - database tables not created yet')
@@ -41,9 +43,6 @@ export class DatabaseService {
           console.log('📊 Demo Mode: Using mock data - database not available')
         }
       }
-      
-      // Suppress the error to prevent network error logs in production
-      // The application is designed to work seamlessly with mock data
     }
     
     this.databaseChecked = true
@@ -65,7 +64,7 @@ export class DatabaseService {
       })
       return users.length > 0 ? users[0] : null
     } catch (error) {
-      // Gracefully fallback to mock data without logging errors
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.getUserByUserId(userId)
@@ -92,7 +91,7 @@ export class DatabaseService {
       })
       return newUser
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.createUser(userData)
@@ -113,7 +112,7 @@ export class DatabaseService {
       })
       return members
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.getTeamMembers()
@@ -140,7 +139,7 @@ export class DatabaseService {
       })
       return tasks
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.getTasksForUser(userId, status)
@@ -165,7 +164,7 @@ export class DatabaseService {
       })
       return tasks
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.getCompletedTasksForUser(userId, limit)
@@ -189,7 +188,7 @@ export class DatabaseService {
       })
       return tasks
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.getWeeklyTasks(weekNumber, year)
@@ -221,7 +220,7 @@ export class DatabaseService {
       })
       return newTask
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.createTask(taskData)
@@ -239,7 +238,7 @@ export class DatabaseService {
       const updatedTask = await blink.db.tasks.update(taskId, updates)
       return updatedTask
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.updateTask(taskId, updates)
@@ -266,7 +265,7 @@ export class DatabaseService {
       })
       return newSubmission
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.createTaskSubmission(submissionData)
@@ -291,7 +290,7 @@ export class DatabaseService {
       })
       return newInteraction
     } catch (error) {
-      // Gracefully fallback to mock data
+      // Silently fallback to mock data - this is expected behavior
       this.useMockData = true
       this.databaseAvailable = false
       return await mockDataService.createAiInteraction(interactionData)

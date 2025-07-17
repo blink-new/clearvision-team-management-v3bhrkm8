@@ -20,7 +20,7 @@ export default function DatabaseStatusAlert({ isUsingMockData }: DatabaseStatusA
               This is a fully functional prototype with AI-powered task management, team analytics, and interactive workflows.
               <br />
               <span className="text-sm mt-2 block">
-                <strong>Fully functional:</strong> AI assistant, task assignment, team management, analytics, and all user interactions work perfectly.
+                <strong>Fully functional:</strong> AI assistant, task assignment, team management, analytics, and all user interactions work perfectly. Database connectivity will be restored when tables are created.
               </span>
             </AlertDescription>
           </div>
